@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import { ToastProvider } from "@/components/Toast";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "InterMeet — Video Conferencing",
@@ -14,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="dark" suppressHydrationWarning>
+    <html lang="en" data-theme="dark" suppressHydrationWarning className={inter.variable}>
       <head>
         {/* Inline script to prevent flash of wrong theme */}
         <script
@@ -30,7 +33,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>
+      <body className="bg-background text-foreground antialiased font-sans">
         <ErrorBoundary>
           <ToastProvider>
             {children}

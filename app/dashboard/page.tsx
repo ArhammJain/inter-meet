@@ -93,7 +93,7 @@ export default function DashboardPage() {
     }
     init()
     return () => { if (realtimeChannel) supabase.removeChannel(realtimeChannel) }
-  }, [])
+  }, [supabase])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -174,20 +174,19 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="page-full">
-        <header className="header-responsive" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 2rem', borderBottom: '1px solid var(--border)', background: 'var(--card-bg)', backdropFilter: 'var(--backdrop-blur)' }}>
-          <div className="skeleton" style={{ width: 100, height: 24 }} />
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <div className="skeleton" style={{ width: 38, height: 38, borderRadius: 10 }} />
-            <div className="skeleton" style={{ width: 70, height: 38, borderRadius: 10 }} />
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+        <header className="sticky top-0 z-40 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-200 dark:border-white/5 px-8 py-4 flex items-center justify-between">
+          <div className="w-24 h-6 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
+          <div className="flex gap-2">
+            <div className="w-10 h-10 bg-zinc-200 dark:bg-zinc-800 rounded-lg animate-pulse" />
+            <div className="w-20 h-10 bg-zinc-200 dark:bg-zinc-800 rounded-lg animate-pulse" />
           </div>
         </header>
-        <main className="main-responsive" style={{ flex: 1, padding: '2.5rem 2rem', maxWidth: 840, width: '100%', margin: '0 auto' }}>
-          <div className="skeleton" style={{ width: 250, height: 32, marginBottom: 8 }} />
-          <div className="skeleton" style={{ width: 320, height: 18, marginBottom: 40 }} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
-            <div className="skeleton" style={{ height: 180, borderRadius: 14 }} />
-            <div className="skeleton" style={{ height: 180, borderRadius: 14 }} />
+        <main className="max-w-5xl mx-auto p-6 md:p-8 space-y-8">
+          <div className="w-64 h-8 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse mb-8" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="h-64 bg-zinc-200 dark:bg-zinc-800 rounded-2xl animate-pulse" />
+            <div className="h-64 bg-zinc-200 dark:bg-zinc-800 rounded-2xl animate-pulse" />
           </div>
         </main>
       </div>
@@ -195,52 +194,51 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="page-full">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white font-sans">
       {/* Header */}
-      <header className="header-responsive" style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0.75rem 2rem',
-        borderBottom: '1px solid var(--border)',
-        background: 'var(--card-bg)',
-        backdropFilter: 'var(--backdrop-blur)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 40,
-      }}>
-        <span className="brand-logo">InterMeet</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Link href="/dashboard/analytics" className="btn btn-ghost btn-sm hide-mobile">📊 Analytics</Link>
-          <Link href="/dashboard/profile" className="btn btn-ghost btn-sm hide-mobile">
+      <header className="sticky top-0 z-40 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-200 dark:border-white/5 px-6 md:px-8 py-4 flex items-center justify-between">
+        <Link href="/dashboard" className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
+          InterMeet
+        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard/analytics" className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
+            📊 Analytics
+          </Link>
+          <Link href="/dashboard/profile" className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
             {user?.user_metadata?.full_name || user?.email}
           </Link>
+          <div className="h-4 w-px bg-zinc-200 dark:bg-white/10 mx-1 hidden md:block" />
           <ThemeSwitcher />
-          <button onClick={handleSignOut} className="btn btn-outline btn-sm">Sign Out</button>
+          <button 
+            onClick={handleSignOut} 
+            className="px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-white/10 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+          >
+            Sign Out
+          </button>
         </div>
       </header>
 
-      <main className="main-responsive" style={{ flex: 1, padding: '2.5rem 2rem', maxWidth: 840, width: '100%', margin: '0 auto' }}>
+      <main className="max-w-5xl mx-auto p-6 md:p-8">
         {/* Welcome */}
-        <div style={{ marginBottom: '2rem' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
+        <div className="mb-8">
+          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-2">
             Welcome, {user?.user_metadata?.full_name || 'there'} 👋
           </h2>
-          <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
+          <p className="text-zinc-500 dark:text-zinc-400">
             Create a new meeting or join an existing one.
           </p>
         </div>
 
-        <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           {/* Create Room */}
-          <div className="card">
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '1.1rem' }}>➕</span> New Meeting
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl p-6 shadow-sm hover:border-indigo-500/30 transition-colors">
+            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <span className="text-xl">➕</span> New Meeting
             </h3>
-            <form onSubmit={handleCreateRoom} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <form onSubmit={handleCreateRoom} className="space-y-4">
               <input
                 type="text"
-                className="input"
+                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder-zinc-500"
                 value={newRoomName}
                 onChange={(e) => setNewRoomName(e.target.value)}
                 placeholder="Meeting name (optional)"
@@ -249,62 +247,59 @@ export default function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setShowAdvanced(!showAdvanced)}
-                className="btn btn-ghost btn-sm"
-                style={{ justifyContent: 'flex-start', padding: '0.25rem 0', fontSize: '0.75rem' }}
+                className="text-xs font-medium text-zinc-500 hover:text-indigo-500 transition-colors flex items-center gap-1"
               >
                 {showAdvanced ? '▾ Hide options' : '▸ Advanced options'}
               </button>
               {showAdvanced && (
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.625rem',
-                  padding: '0.875rem',
-                  background: 'var(--background-secondary)',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border)',
-                }}>
+                <div className="flex flex-col gap-3 p-4 bg-zinc-50 dark:bg-zinc-950/50 rounded-xl border border-zinc-200 dark:border-white/5 animate-in slide-in-from-top-2">
                   <input
                     type="password"
-                    className="input"
+                    className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500 transition-all placeholder-zinc-500"
                     value={newRoomPassword}
                     onChange={(e) => setNewRoomPassword(e.target.value)}
                     placeholder="Room password (optional)"
                     maxLength={50}
-                    style={{ fontSize: '0.825rem' }}
                   />
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.825rem', cursor: 'pointer', color: 'var(--foreground)' }}>
-                    <input type="checkbox" checked={isPersistent} onChange={(e) => setIsPersistent(e.target.checked)} style={{ accentColor: 'var(--primary)' }} />
+                  <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400 cursor-pointer">
+                    <input type="checkbox" checked={isPersistent} onChange={(e) => setIsPersistent(e.target.checked)} className="accent-indigo-500 w-4 h-4 rounded" />
                     Persistent room (no 24h expiry)
                   </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.825rem', cursor: 'pointer', color: 'var(--foreground)' }}>
-                    <input type="checkbox" checked={waitingRoom} onChange={(e) => setWaitingRoom(e.target.checked)} style={{ accentColor: 'var(--primary)' }} />
+                  <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400 cursor-pointer">
+                    <input type="checkbox" checked={waitingRoom} onChange={(e) => setWaitingRoom(e.target.checked)} className="accent-indigo-500 w-4 h-4 rounded" />
                     Enable waiting room
                   </label>
                 </div>
               )}
-              <button type="submit" disabled={creating} className="btn btn-primary btn-full">
+              <button 
+                type="submit" 
+                disabled={creating} 
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/30 hover:-translate-y-0.5"
+              >
                 {creating ? 'Creating...' : 'Create Meeting →'}
               </button>
             </form>
           </div>
 
           {/* Join Room */}
-          <div className="card">
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '1.1rem' }}>🔗</span> Join Meeting
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl p-6 shadow-sm hover:border-indigo-500/30 transition-colors">
+            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <span className="text-xl">🔗</span> Join Meeting
             </h3>
-            <form onSubmit={handleJoinRoom} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <form onSubmit={handleJoinRoom} className="space-y-4">
               <input
                 type="text"
-                className="input"
+                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder-zinc-400 text-center font-mono text-lg tracking-widest uppercase font-bold"
                 value={roomCode}
                 onChange={(e) => setRoomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
-                placeholder="Enter 6-digit code"
+                placeholder="ENTER CODE"
                 maxLength={6}
-                style={{ textTransform: 'uppercase', letterSpacing: '0.2em', fontWeight: 700, textAlign: 'center', fontSize: '1.1rem' }}
               />
-              <button type="submit" className="btn btn-secondary btn-full" disabled={roomCode.length !== 6}>
+              <button 
+                type="submit" 
+                disabled={roomCode.length !== 6}
+                className="w-full py-3 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5"
+              >
                 Join Meeting →
               </button>
             </form>
@@ -312,47 +307,57 @@ export default function DashboardPage() {
         </div>
 
         {/* History */}
-        <div style={{ marginTop: '2.5rem' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div>
+          <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
             <span>📋</span> Recent Meetings
           </h3>
 
           {historyLoading ? (
-            <div className="history-list">
+            <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="skeleton" style={{ height: 56, borderRadius: 10 }} />
+                <div key={i} className="h-16 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
               ))}
             </div>
           ) : history.length === 0 ? (
-            <div style={{ color: 'var(--muted)', fontSize: '0.875rem', padding: '2rem', textAlign: 'center', border: '1px dashed var(--border)', borderRadius: 'var(--radius-sm)' }}>
+            <div className="text-center py-12 border-2 border-dashed border-zinc-200 dark:border-white/5 rounded-2xl text-zinc-500 dark:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-900/50">
               No meetings yet. Create one to get started!
             </div>
           ) : (
-            <div className="history-list">
+            <div className="space-y-3">
               {history.map((item) => (
-                <div key={item.id} className="history-item">
-                  <div className="history-item-info">
-                    <div className="history-item-name">{item.rooms?.name || 'Untitled Meeting'}</div>
-                    <div className="history-item-meta">
-                      <span style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>{item.rooms?.room_code}</span>
-                      <span style={{ margin: '0 0.35rem' }}>·</span>
-                      {formatDate(item.joined_at)}
+                <div key={item.id} className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-xl p-4 hover:border-indigo-500/30 transition-colors group shadow-sm">
+                  <div>
+                    <div className="font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-indigo-500 transition-colors">
+                      {item.rooms?.name || 'Untitled Meeting'}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-zinc-500 mt-1">
+                      <span className="font-mono bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-600 dark:text-zinc-400">{item.rooms?.room_code}</span>
+                      <span>·</span>
+                      <span>{formatDate(item.joined_at)}</span>
                       {item.rooms?.is_active && activeRoomCounts[item.rooms.id] ? (
-                        <span className="participant-badge" style={{ marginLeft: '0.5rem' }}>
-                          🟢 {activeRoomCounts[item.rooms.id]} in call
+                        <span className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium ml-2 bg-green-500/10 px-2 py-0.5 rounded-full">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                          {activeRoomCounts[item.rooms.id]} live
                         </span>
                       ) : null}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.375rem', flexShrink: 0 }}>
+                  <div className="flex gap-2 shrink-0">
                     <button
-                      className={`copy-btn${copiedCode === item.rooms?.room_code ? ' copied' : ''}`}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${
+                        copiedCode === item.rooms?.room_code 
+                        ? 'bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400' 
+                        : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white'
+                      }`}
                       onClick={() => copyInviteLink(item.rooms.room_code)}
                     >
                       {copiedCode === item.rooms?.room_code ? '✓ Copied' : 'Copy Link'}
                     </button>
                     {item.rooms?.is_active && (
-                      <button className="btn btn-primary btn-sm" onClick={() => router.push(`/room/${item.rooms.room_code}`)}>
+                      <button 
+                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm" 
+                        onClick={() => router.push(`/room/${item.rooms.room_code}`)}
+                      >
                         Rejoin
                       </button>
                     )}

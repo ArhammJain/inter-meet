@@ -17,7 +17,6 @@ interface RoomStat {
 }
 
 export default function AnalyticsPage() {
-  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [rooms, setRooms] = useState<RoomStat[]>([])
   const [totals, setTotals] = useState({ rooms: 0, participants: 0, messages: 0 })
@@ -28,7 +27,6 @@ export default function AnalyticsPage() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
-      setUser(user)
 
       const { data: myRooms } = await supabase
         .from('rooms')
@@ -76,19 +74,19 @@ export default function AnalyticsPage() {
       setLoading(false)
     }
     init()
-  }, [])
+  }, [supabase])
 
   if (loading) {
     return (
-      <div className="page-full">
-        <header className="header-responsive" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 2rem', borderBottom: '1px solid var(--border)', background: 'var(--card-bg)', backdropFilter: 'var(--backdrop-blur)' }}>
-          <div className="skeleton" style={{ width: 100, height: 24 }} />
-          <div className="skeleton" style={{ width: 120, height: 36, borderRadius: 10 }} />
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+        <header className="sticky top-0 z-40 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-200 dark:border-white/5 px-8 py-4 flex items-center justify-between">
+          <div className="w-24 h-6 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
+          <div className="w-32 h-9 bg-zinc-200 dark:bg-zinc-800 rounded-lg animate-pulse" />
         </header>
-        <main className="main-responsive" style={{ flex: 1, padding: '2.5rem 2rem', maxWidth: 840, width: '100%', margin: '0 auto' }}>
-          <div className="skeleton" style={{ width: 200, height: 32, marginBottom: 32 }} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
-            {[1, 2, 3].map((i) => <div key={i} className="skeleton" style={{ height: 90, borderRadius: 14 }} />)}
+        <main className="max-w-5xl mx-auto p-6 md:p-8 space-y-8">
+          <div className="w-48 h-8 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse mb-8" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => <div key={i} className="h-28 bg-zinc-200 dark:bg-zinc-800 rounded-2xl animate-pulse" />)}
           </div>
         </main>
       </div>
@@ -96,81 +94,81 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="page-full">
-      <header className="header-responsive" style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0.75rem 2rem',
-        borderBottom: '1px solid var(--border)',
-        background: 'var(--card-bg)',
-        backdropFilter: 'var(--backdrop-blur)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 40,
-      }}>
-        <span className="brand-logo">InterMeet</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white font-sans">
+      <header className="sticky top-0 z-40 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-200 dark:border-white/5 px-6 md:px-8 py-4 flex items-center justify-between">
+        <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">InterMeet</span>
+        <div className="flex items-center gap-3">
           <ThemeSwitcher />
-          <button onClick={() => router.push('/dashboard')} className="btn btn-outline btn-sm">← Dashboard</button>
+          <button 
+            onClick={() => router.push('/dashboard')} 
+            className="px-3 py-1.5 text-sm font-medium text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-white/10 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+          >
+            ← Dashboard
+          </button>
         </div>
       </header>
 
-      <main className="main-responsive" style={{ flex: 1, padding: '2.5rem 2rem', maxWidth: 840, width: '100%', margin: '0 auto' }}>
-        <div style={{ marginBottom: '2rem' }}>
-          <div className="section-badge">📊 Insights</div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.02em' }}>Analytics</h2>
-          <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+      <main className="max-w-5xl mx-auto p-6 md:p-8">
+        <div className="mb-8">
+          <div className="inline-block px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold mb-3 border border-indigo-500/20">
+            📊 Insights
+          </div>
+          <h2 className="text-3xl font-extrabold tracking-tight mb-2">Analytics</h2>
+          <p className="text-zinc-500 dark:text-zinc-400">
             Overview of your meetings and engagement
           </p>
         </div>
 
         {/* Summary cards */}
-        <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>
-          <div className="stat-card">
-            <div className="stat-value">{totals.rooms}</div>
-            <div className="stat-label">Rooms Created</div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl p-6 text-center shadow-sm">
+            <div className="text-3xl font-extrabold mb-1 bg-clip-text text-transparent bg-linear-to-br from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-400">{totals.rooms}</div>
+            <div className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Rooms Created</div>
           </div>
-          <div className="stat-card">
-            <div className="stat-value">{totals.participants}</div>
-            <div className="stat-label">Total Joins</div>
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl p-6 text-center shadow-sm">
+            <div className="text-3xl font-extrabold mb-1 bg-clip-text text-transparent bg-linear-to-br from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-400">{totals.participants}</div>
+            <div className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Total Joins</div>
           </div>
-          <div className="stat-card">
-            <div className="stat-value">{totals.messages}</div>
-            <div className="stat-label">Chat Messages</div>
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl p-6 text-center shadow-sm">
+            <div className="text-3xl font-extrabold mb-1 bg-clip-text text-transparent bg-linear-to-br from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-400">{totals.messages}</div>
+            <div className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Chat Messages</div>
           </div>
         </div>
 
         {/* Room list */}
-        <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
           <span>📁</span> Your Rooms
         </h3>
 
         {rooms.length === 0 ? (
-          <div style={{ color: 'var(--muted)', fontSize: '0.875rem', padding: '2rem', textAlign: 'center', border: '1px dashed var(--border)', borderRadius: 'var(--radius-sm)' }}>
+          <div className="text-center py-12 border-2 border-dashed border-zinc-200 dark:border-white/5 rounded-2xl text-zinc-500 dark:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-900/50">
             No rooms created yet. Create one from the dashboard!
           </div>
         ) : (
-          <div className="history-list">
+          <div className="space-y-3">
             {rooms.map((r) => (
-              <div key={r.id} className="history-item">
-                <div className="history-item-info">
-                  <div className="history-item-name">{r.name}</div>
-                  <div className="history-item-meta">
-                    <span style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>{r.room_code}</span>
-                    <span style={{ margin: '0 0.35rem' }}>·</span>
-                    {new Date(r.created_at).toLocaleDateString()}
-                    <span style={{ margin: '0 0.35rem' }}>·</span>
+              <div key={r.id} className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-xl p-4 hover:border-indigo-500/30 transition-colors shadow-sm">
+                <div>
+                  <div className="font-bold text-zinc-900 dark:text-zinc-100 mb-1">{r.name}</div>
+                  <div className="flex items-center gap-2 text-xs text-zinc-500">
+                    <span className="font-mono bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-600 dark:text-zinc-400">{r.room_code}</span>
+                    <span>·</span>
+                    <span>{new Date(r.created_at).toLocaleDateString()}</span>
+                    <span>·</span>
                     {r.is_active ? (
-                      <span style={{ color: 'var(--success)', fontWeight: 600 }}>Active</span>
+                      <span className="text-green-600 dark:text-green-400 font-semibold bg-green-500/10 px-1.5 py-0.5 rounded">Active</span>
                     ) : (
-                      <span style={{ color: 'var(--muted-light)' }}>Ended</span>
+                      <span className="text-zinc-400">Ended</span>
                     )}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: 'var(--muted)', flexShrink: 0, alignItems: 'center' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>👥 {r.totalParticipants}</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>💬 {r.totalMessages}</span>
+                <div className="flex items-center gap-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 shrink-0">
+                  <span className="flex items-center gap-1.5 bg-zinc-50 dark:bg-zinc-800/50 px-2 py-1 rounded-lg border border-zinc-200 dark:border-white/5">
+                    👥 {r.totalParticipants}
+                  </span>
+                  <span className="flex items-center gap-1.5 bg-zinc-50 dark:bg-zinc-800/50 px-2 py-1 rounded-lg border border-zinc-200 dark:border-white/5">
+                    💬 {r.totalMessages}
+                  </span>
                 </div>
               </div>
             ))}

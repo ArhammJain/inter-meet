@@ -39,22 +39,29 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, [removeToast])
 
   const icons: Record<ToastType, string> = {
-    info: '\u2139\uFE0F',
-    success: '\u2705',
-    error: '\u274C',
+    info: 'ℹ️',
+    success: '✅',
+    error: '❌',
   }
 
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div className="toast-container">
+      <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-100 pointer-events-none">
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`toast${t.exiting ? ' toast-exit' : ''}`}
+            className={`
+              flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-sm font-medium min-w-[300px] pointer-events-auto cursor-pointer border
+              transition-all duration-200 ease-in-out z-100
+              ${t.exiting ? 'opacity-0 translate-x-4' : 'opacity-100 translate-x-0 animate-in slide-in-from-bottom-2 fade-in'}
+              ${t.type === 'error' ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400' : 
+                t.type === 'success' ? 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-500/30 text-green-600 dark:text-green-400' : 
+                'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white'}
+            `}
             onClick={() => removeToast(t.id)}
           >
-            <span>{icons[t.type]}</span>
+            <span className="text-lg">{icons[t.type]}</span>
             <span>{t.message}</span>
           </div>
         ))}

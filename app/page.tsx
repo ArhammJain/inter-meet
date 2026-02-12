@@ -1,161 +1,178 @@
 import Link from 'next/link'
 import ThemeSwitcher from '@/components/ThemeSwitcher'
-
-const FEATURES = [
-  { icon: '📹', title: 'HD Video & Audio', desc: 'Crystal-clear conferencing powered by LiveKit\'s low-latency infrastructure' },
-  { icon: '🔒', title: 'Secure Rooms', desc: 'Password protection, waiting rooms, and encrypted connections' },
-  { icon: '💬', title: 'In-Call Chat', desc: 'Real-time messaging with persistent history for every meeting' },
-  { icon: '👥', title: 'Breakout Rooms', desc: 'Split into focused groups for workshops and brainstorming' },
-  { icon: '🎯', title: 'Smart Controls', desc: 'Keyboard shortcuts, reactions, and intuitive media controls' },
-  { icon: '♾️', title: 'Persistent Links', desc: 'Create reusable meeting rooms that never expire' },
-]
-
-const STATS = [
-  { value: '99.9%', label: 'Uptime' },
-  { value: '<100ms', label: 'Latency' },
-  { value: 'E2E', label: 'Encrypted' },
-]
+import { 
+  Video, Lock, MicOff, PhoneOff, 
+  Smile, CloudLightning, PenTool
+} from 'lucide-react'
 
 export default function Home() {
   return (
-    <div className="page-full">
-      {/* Nav */}
-      <header style={{
-        padding: '1rem 2rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        borderBottom: '1px solid var(--border)',
-        background: 'var(--card-bg)',
-        backdropFilter: 'var(--backdrop-blur)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-      }}>
-        <span className="brand-logo">InterMeet</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+    <div className="h-screen flex flex-col bg-white dark:bg-[#0a0a0a] text-slate-900 dark:text-white font-sans selection:bg-indigo-500/30 overflow-hidden">
+      
+      {/* Background Contour Lines */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
+        <svg className="absolute top-0 left-0 w-full h-full opacity-[0.03] dark:opacity-[0.05]" viewBox="0 0 100 100" preserveAspectRatio="none">
+           <path d="M0 50 Q 25 30 50 50 T 100 50" stroke="currentColor" fill="none" strokeWidth="0.5"/>
+           <path d="M0 70 Q 25 50 50 70 T 100 70" stroke="currentColor" fill="none" strokeWidth="0.5"/>
+           <path d="M-20 20 Q 30 80 80 20" stroke="currentColor" fill="none" strokeWidth="0.5"/>
+        </svg>
+      </div>
+
+      {/* Navbar */}
+      <header className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 max-w-7xl mx-auto w-full z-50">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg sm:text-xl shadow-lg shadow-indigo-600/20">I</div>
+          <span className="text-xl sm:text-2xl font-bold tracking-tight text-indigo-900 dark:text-white">Inter Meet</span>
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-4">
           <ThemeSwitcher />
-          <Link href="/auth/login" className="btn btn-ghost btn-sm">Sign In</Link>
-          <Link href="/auth/signup" className="btn btn-primary btn-sm">Get Started</Link>
+          <Link href="/auth/signup" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all shadow-md hover:shadow-lg shadow-indigo-600/20">
+            Sign up
+          </Link>
+          <Link href="/auth/login" className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full border border-indigo-200 dark:border-white/10 hover:border-indigo-600 dark:hover:border-indigo-500 text-indigo-600 dark:text-indigo-400 text-xs sm:text-sm font-semibold transition-all">
+            Login
+          </Link>
         </div>
       </header>
 
-      <main>
-        {/* Hero */}
-        <section style={{
-          textAlign: 'center',
-          padding: 'clamp(4rem, 10vw, 8rem) 1.5rem clamp(3rem, 8vw, 6rem)',
-          maxWidth: 720,
-          margin: '0 auto',
-          position: 'relative',
-        }}>
-          <div className="section-badge">✨ Open Source & Free</div>
-          <h1 style={{
-            fontSize: 'clamp(2.25rem, 5.5vw, 4rem)',
-            fontWeight: 900,
-            lineHeight: 1.05,
-            letterSpacing: '-0.03em',
-            marginBottom: '1.25rem',
-          }}>
-            Video meetings,<br />
-            <span className="gradient-text">made brilliant</span>
-          </h1>
-          <p style={{
-            color: 'var(--muted)',
-            fontSize: 'clamp(1rem, 2vw, 1.15rem)',
-            lineHeight: 1.7,
-            maxWidth: 520,
-            margin: '0 auto 2.5rem',
-          }}>
-            Create or join secure HD video meetings in seconds. No downloads, no friction — just click and connect.
-          </p>
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/auth/signup" className="btn btn-primary btn-lg">
-              Start for Free →
-            </Link>
-            <Link href="/auth/login" className="btn btn-outline btn-lg">
-              Sign In
-            </Link>
-          </div>
+      <main className="flex-1 w-full max-w-7xl mx-auto flex flex-col">
+        
+        {/* HERO SECTION */}
+        <section className="relative flex-1 px-4 sm:px-6 grid lg:grid-cols-12 gap-6 sm:gap-12 items-center">
+          
+          {/* LEFT: Text Content */}
+          <div className="col-span-12 lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left z-10 justify-center">
+            <h1 className="text-[2.75rem] leading-[1.15] sm:text-6xl md:text-7xl lg:text-[5.5rem] font-bold tracking-tight mb-6 sm:mb-10 sm:leading-[1.1] text-slate-800 dark:text-white">
+              Meet 
+              {/* Cyan Pill with Pen */}
+              <span className="inline-flex align-middle ml-2 sm:ml-4 w-12 sm:w-20 h-7 sm:h-12 bg-cyan-400 rounded-full items-center justify-center relative -rotate-12 transform translate-y-0.5 sm:translate-y-1 shadow-lg shadow-cyan-400/30">
+                <PenTool className="w-3.5 h-3.5 sm:w-6 sm:h-6 text-white fill-white" />
+              </span>
+              <br />
+              Without a <br />
+              Hitch
+              {/* Purple Pill with Lightning */}
+              <span className="inline-flex align-middle ml-2 sm:ml-4 w-14 sm:w-24 h-7 sm:h-12 bg-indigo-600 rounded-full items-center justify-center relative rotate-6 transform translate-y-0.5 sm:translate-y-1 shadow-lg shadow-indigo-600/30">
+                <CloudLightning className="w-3.5 h-3.5 sm:w-6 sm:h-6 text-yellow-400 fill-yellow-400" />
+              </span>
+            </h1>
 
-          {/* Trust stats */}
-          <div style={{
-            display: 'flex',
-            gap: '2.5rem',
-            justifyContent: 'center',
-            marginTop: '3.5rem',
-            flexWrap: 'wrap',
-          }}>
-            {STATS.map((s) => (
-              <div key={s.label} style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800 }} className="gradient-text">{s.value}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.15rem' }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Features */}
-        <section style={{
-          padding: '3rem 1.5rem 5rem',
-          maxWidth: 960,
-          margin: '0 auto',
-        }}>
-          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <div className="section-badge">🚀 Features</div>
-            <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 800, letterSpacing: '-0.02em' }}>
-              Everything you need
-            </h2>
-            <p style={{ color: 'var(--muted)', fontSize: '0.95rem', marginTop: '0.5rem' }}>
-              Built for teams who value simplicity and reliability
+            <p className="text-sm sm:text-lg text-slate-500 dark:text-slate-400 mb-8 sm:mb-12 max-w-sm sm:max-w-md font-medium leading-relaxed px-2 sm:px-0">
+              Distance doesn&apos;t matter, it&apos;s the meeting that matters the most.
             </p>
-          </div>
-          <div className="responsive-grid" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '1rem',
-          }}>
-            {FEATURES.map((f) => (
-              <div key={f.title} className="feature-card">
-                <div className="feature-icon">{f.icon}</div>
-                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.35rem' }}>{f.title}</h3>
-                <p style={{ color: 'var(--muted)', fontSize: '0.85rem', lineHeight: 1.6 }}>{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
 
-        {/* CTA */}
-        <section style={{
-          textAlign: 'center',
-          padding: '4rem 1.5rem 5rem',
-          maxWidth: 600,
-          margin: '0 auto',
-        }}>
-          <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '1rem' }}>
-            Ready to get started?
-          </h2>
-          <p style={{ color: 'var(--muted)', fontSize: '0.95rem', marginBottom: '2rem' }}>
-            Create your free account and start hosting meetings in under 30 seconds.
-          </p>
-          <Link href="/auth/signup" className="btn btn-primary btn-lg">
-            Create Free Account →
-          </Link>
+            {/* Input Field Box */}
+            <div className="w-full max-w-[480px] flex flex-col sm:flex-row gap-3 sm:gap-0 sm:bg-white sm:dark:bg-zinc-900 sm:p-2 sm:pl-8 sm:rounded-full sm:shadow-[0_8px_30px_rgb(0,0,0,0.06)] sm:dark:shadow-none sm:border sm:border-slate-100 sm:dark:border-white/10">
+              <input 
+                type="text" 
+                placeholder="Insert your meeting link" 
+                className="w-full sm:flex-1 min-w-0 bg-white dark:bg-zinc-900 sm:bg-transparent sm:dark:bg-transparent border border-slate-200 dark:border-white/10 sm:border-none rounded-full px-5 py-3.5 sm:p-0 outline-none text-sm sm:text-base text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600"
+              />
+              <button className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-full text-sm sm:text-base font-bold transition-all flex items-center justify-center gap-2 sm:gap-3 shadow-lg shadow-indigo-600/25 whitespace-nowrap">
+                <Video className="w-4 h-4 sm:w-5 sm:h-5 fill-white" />
+                Start meeting
+              </button>
+            </div>
+          </div>
+
+          {/* RIGHT: Avatar Network Grid */}
+          <div className="hidden lg:flex lg:col-span-7 relative h-[500px] md:h-[600px] w-full items-center justify-center select-none">
+             
+            {/* Connector Lines Layer (SVG) */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 700 600" preserveAspectRatio="xMidYMid meet">
+               {/* Center to top-left */}
+               <path d="M350 270 Q 290 200 220 80" fill="none" stroke="#c4b5fd" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.5"/>
+               {/* Center to top-right */}
+               <path d="M350 270 Q 420 200 500 80" fill="none" stroke="#c4b5fd" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.5"/>
+               {/* Center to mid-left */}
+               <path d="M350 270 Q 200 250 60 260" fill="none" stroke="#c4b5fd" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.5"/>
+               {/* Center to mid-right */}
+               <path d="M350 270 Q 500 250 640 260" fill="none" stroke="#c4b5fd" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.5"/>
+               {/* Center to bottom-left */}
+               <path d="M350 270 Q 310 380 260 480" fill="none" stroke="#c4b5fd" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.5"/>
+               {/* Center to bottom-right */}
+               <path d="M350 270 Q 400 380 470 480" fill="none" stroke="#c4b5fd" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.5"/>
+            </svg>
+
+            {/* Floating Icon Chips along the lines */}
+            <div className="absolute top-[22%] left-[28%] z-10 bg-black text-white p-1.5 sm:p-2 rounded-full shadow-xl hidden sm:block"><MicOff className="w-3 h-3 sm:w-4 sm:h-4" /></div>
+            <div className="absolute top-[20%] right-[28%] z-10 bg-black text-white p-1.5 sm:p-2 rounded-full shadow-xl hidden sm:block"><Video className="w-3 h-3 sm:w-4 sm:h-4" /></div>
+            <div className="absolute top-[38%] left-[20%] z-10 bg-zinc-800 text-white p-1.5 sm:p-2.5 rounded-xl shadow-xl hidden sm:block"><Lock className="w-3 h-3 sm:w-4 sm:h-4" /></div>
+            <div className="absolute top-[42%] right-[22%] z-10 bg-zinc-800 text-white p-1.5 sm:p-2.5 rounded-full shadow-xl hidden sm:block"><Smile className="w-3 h-3 sm:w-4 sm:h-4" /></div>
+            <div className="absolute top-[62%] left-[35%] z-10 bg-zinc-800 text-white p-1.5 sm:p-2.5 rounded-xl shadow-xl rotate-12 hidden sm:block"><PhoneOff className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" /></div>
+            <div className="absolute top-[60%] right-[33%] z-10 bg-zinc-800 text-white p-1.5 sm:p-2.5 rounded-full shadow-xl -rotate-12 hidden sm:block"><Video className="w-3 h-3 sm:w-4 sm:h-4" /></div>
+
+            {/* Avatars — 2-3-2 diamond layout matching the reference */}
+            <div className="relative w-full h-full">
+              
+              {/* TOP ROW — two avatars side by side near top */}
+              <Avatar 
+                src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=200&h=200&fit=crop" 
+                className="absolute top-[3%] left-[22%]"
+                bg="bg-purple-200"
+              />
+              <Avatar 
+                src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop" 
+                className="absolute top-[3%] right-[18%]"
+                bg="bg-orange-100"
+                badge={<div className="absolute -top-2 -right-6 sm:-right-10 bg-black text-white text-xs sm:text-sm font-bold px-3 sm:px-4 py-1 sm:py-1.5 rounded-full flex items-center gap-1 shadow-xl z-50">LOL <span>🤣</span></div>}
+              />
+
+              {/* MIDDLE ROW — three avatars, center one is the anchor */}
+              <Avatar 
+                src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&h=200&fit=crop" 
+                className="absolute top-[32%] left-[2%]"
+                bg="bg-blue-100"
+              />
+              {/* CENTER ANCHOR */}
+              <Avatar 
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop" 
+                className="absolute top-[28%] left-[50%] -translate-x-1/2 scale-110 z-20 shadow-2xl ring-4 ring-white dark:ring-black"
+                bg="bg-orange-50"
+              />
+              <Avatar 
+                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop" 
+                className="absolute top-[32%] right-[2%]"
+                bg="bg-purple-100"
+              />
+
+              {/* BOTTOM ROW — two avatars below center */}
+              <Avatar 
+                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop" 
+                className="absolute top-[64%] left-[24%]"
+                bg="bg-yellow-100"
+                badge={<div className="absolute -top-4 -left-4 sm:-left-8 bg-black text-white text-xs sm:text-sm font-bold px-3 sm:px-4 py-1 sm:py-2 rounded-full flex items-center gap-1 shadow-xl -rotate-6 z-50">Wow <span>😲</span></div>}
+              />
+              <Avatar 
+                src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop" 
+                className="absolute top-[64%] right-[20%]"
+                bg="bg-blue-100"
+              />
+            </div>
+          </div>
         </section>
       </main>
+    </div>
+  )
+}
 
-      {/* Footer */}
-      <footer style={{
-        borderTop: '1px solid var(--border)',
-        padding: '1.5rem 2rem',
-        textAlign: 'center',
-        color: 'var(--muted)',
-        fontSize: '0.75rem',
-      }}>
-        <span className="brand-logo" style={{ fontSize: '0.9rem' }}>InterMeet</span>
-        <span style={{ margin: '0 0.5rem' }}>·</span>
-        Open-source video conferencing built with Next.js, LiveKit & Supabase
-      </footer>
+// Avatar component
+interface AvatarProps {
+  src: string
+  className: string
+  bg: string
+  badge?: React.ReactNode
+}
+
+function Avatar({ src, className, bg, badge }: AvatarProps) {
+  return (
+    <div className={`transition-all hover:z-30 hover:scale-105 duration-300 ${className}`}>
+      {badge}
+      <div className={`w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36 rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden shadow-lg ${bg}`}>
+         {/* eslint-disable-next-line @next/next/no-img-element */}
+         <img src={src} alt="User" className="w-full h-full object-cover mix-blend-multiply opacity-90" />
+      </div>
     </div>
   )
 }

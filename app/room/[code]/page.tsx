@@ -4,24 +4,14 @@ import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import {
   LiveKitRoom,
-  VideoConference,
 } from '@livekit/components-react'
 import '@livekit/components-styles'
 import { useToast } from '@/components/Toast'
-
-import Reactions from '@/components/Reactions'
-import NetworkQuality from '@/components/NetworkQuality'
+import MeetingView from '@/components/MeetingView'
 import { createClient } from '@/lib/supabase/client'
 
+// --- Logic & Types (Unchanged) ---
 type Stage = 'prejoin' | 'lobby' | 'password' | 'connecting' | 'connected' | 'error'
-
-interface BreakoutRoom {
-  id: string
-  name: string
-  room_code: string
-  is_active: boolean
-  participantCount: number
-}
 
 interface LobbyEntry {
   id: string
@@ -45,6 +35,52 @@ function playSound(type: 'join' | 'leave') {
   } catch { /* ignore */ }
 }
 
+// --- UI Components (Redesigned) ---
+
+// 1. Theme Provider Wrapper
+const DarkThemeProvider = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-blue-500/30 selection:text-blue-50">
+    {children}
+  </div>
+)
+
+// 2. Background with Premium Depth (No Purple)
+const Background = ({ children }: { children: React.ReactNode }) => (
+  <DarkThemeProvider>
+    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden">
+      {/* Subtle Lighting Effects */}
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(30,58,138,0.15),transparent_40%)]" />
+      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-blue-900/5 rounded-full blur-[100px]" />
+      <div className="relative z-10 w-full h-full flex flex-col">{children}</div>
+    </div>
+  </DarkThemeProvider>
+)
+
+// 3. High-End Glass Card
+const GlassCard = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
+  <div className={`bg-zinc-900/60 backdrop-blur-xl border border-white/5 shadow-2xl rounded-2xl p-8 sm:p-10 flex flex-col items-center text-center max-w-md w-full mx-auto relative overflow-hidden ${className}`}>
+    <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-blue-600/0 via-blue-500/50 to-blue-600/0 opacity-50" />
+    {children}
+  </div>
+)
+
+// 4. Minimalist Spinner
+const Spinner = () => (
+  <div className="relative w-12 h-12">
+    <div className="absolute inset-0 rounded-full border-[3px] border-zinc-800"></div>
+    <div className="absolute inset-0 rounded-full border-[3px] border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
+  </div>
+)
+
+// 5. Utility Icons
+const Icons = {
+  MicOn: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>,
+  MicOff: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>,
+  VideoOn: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" /></svg>,
+  VideoOff: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>,
+  Lock: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>,
+}
+
 export default function RoomPage() {
   const params = useParams()
   const router = useRouter()
@@ -57,21 +93,13 @@ export default function RoomPage() {
   const [roomName, setRoomName] = useState('')
   const [roomCode, setRoomCode] = useState('')
   const [isCreator, setIsCreator] = useState(false)
-  const [participantCount, setParticipantCount] = useState(0)
   const [maxParticipants, setMaxParticipants] = useState(10)
   const [waitingRoomEnabled, setWaitingRoomEnabled] = useState(false)
   const [error, setError] = useState('')
   const [ending, setEnding] = useState(false)
   const [copied, setCopied] = useState(false)
   const [password, setPassword] = useState('')
-
-
-  const [showBreakout, setShowBreakout] = useState(false)
-  const [breakoutRooms, setBreakoutRooms] = useState<BreakoutRoom[]>([])
-  const [breakoutName, setBreakoutName] = useState('')
-  const [creatingBreakout, setCreatingBreakout] = useState(false)
   const [lobbyEntries, setLobbyEntries] = useState<LobbyEntry[]>([])
-
   const [videoEnabled, setVideoEnabled] = useState(true)
   const [audioEnabled, setAudioEnabled] = useState(true)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -133,7 +161,7 @@ export default function RoomPage() {
         setError(data.error || 'Failed to join'); setStage('error'); return
       }
       setToken(data.token); setRoomName(data.roomName); setRoomCode(data.roomCode)
-      setIsCreator(data.isCreator); setParticipantCount(data.participantCount)
+      setIsCreator(data.isCreator)
       setMaxParticipants(data.maxParticipants); setWaitingRoomEnabled(data.waitingRoomEnabled)
       setStage('connected'); playSound('join')
     } catch { setError('Failed to connect to server'); setStage('error') }
@@ -158,7 +186,6 @@ export default function RoomPage() {
   // Realtime lobby entries for creator
   useEffect(() => {
     if (!isCreator || !waitingRoomEnabled || stage !== 'connected') return
-    // Initial fetch
     const fetchLobby = async () => {
       try {
         const res = await fetch(`/api/room-lobby?roomCode=${code}&action=list`)
@@ -167,14 +194,9 @@ export default function RoomPage() {
     }
     fetchLobby()
 
-    // Subscribe to realtime lobby changes
     const channel = supabase
       .channel(`lobby-${code}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'lobby' },
-        () => { fetchLobby() }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'lobby' }, () => { fetchLobby() })
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
@@ -203,179 +225,209 @@ export default function RoomPage() {
     setCopied(true); toast('Invite link copied!', 'success'); setTimeout(() => setCopied(false), 2000)
   }
 
-  const fetchBreakoutRooms = useCallback(async () => {
-    try { const res = await fetch(`/api/breakout-rooms?parentRoomCode=${code}`); if (res.ok) { const d = await res.json(); setBreakoutRooms(d.breakoutRooms || []) } } catch { /* ignore */ }
-  }, [code])
-
-  const handleCreateBreakout = async () => {
-    if (creatingBreakout) return; setCreatingBreakout(true)
-    try {
-      const res = await fetch('/api/breakout-rooms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parentRoomCode: code, breakoutName: breakoutName || undefined }) })
-      if (res.ok) { toast('Breakout room created!', 'success'); setBreakoutName(''); fetchBreakoutRooms() }
-      else { const d = await res.json(); toast(d.error || 'Failed', 'error') }
-    } catch { toast('Failed to create breakout room', 'error') }
-    setCreatingBreakout(false)
-  }
-
-  useEffect(() => {
-    if (showBreakout && stage === 'connected') {
-      const timeout = setTimeout(fetchBreakoutRooms, 0)
-      const i = setInterval(fetchBreakoutRooms, 10000)
-      return () => { clearTimeout(timeout); clearInterval(i) }
-    }
-  }, [showBreakout, stage, fetchBreakoutRooms])
-
   // ===== RENDER =====
 
+  // Pre-join screen
   if (stage === 'prejoin') {
     return (
-      <div className="page-center" role="main" aria-label="Pre-join screen">
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: 520, width: '100%' }}>
-          <span className="brand-logo" style={{ fontSize: '1.1rem', marginBottom: '1.5rem' }}>InterMeet</span>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.35rem', letterSpacing: '-0.02em' }}>Ready to join?</h2>
-          <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-            Room <span style={{ fontFamily: 'monospace', letterSpacing: '0.15em', fontWeight: 700, color: 'var(--primary)', background: 'var(--primary-light)', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-xs)' }}>{code}</span>
-          </p>
-          <div className={`video-preview${!videoEnabled ? ' video-preview-off' : ''}`} aria-label="Camera preview">
-            {videoEnabled ? <video ref={videoRef} autoPlay playsInline muted /> : <><span style={{ fontSize: '2.5rem' }}>📷</span><span>Camera is off</span></>}
+      <Background>
+        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col lg:flex-row items-center justify-center gap-12 lg:h-[85vh]">
+          
+          {/* Left Column: Video Preview */}
+          <div className="w-full lg:flex-[1.4] flex flex-col gap-6">
+            <div className="relative w-full aspect-video bg-zinc-900 rounded-3xl overflow-hidden border border-white/10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] ring-1 ring-white/5 group">
+              {videoEnabled ? (
+                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform scale-x-[-1]" />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-900/80 backdrop-blur-sm">
+                  <div className="w-20 h-20 rounded-full bg-zinc-800/50 flex items-center justify-center mb-4 border border-white/5 shadow-inner">
+                    <span className="text-zinc-500"><Icons.VideoOff /></span>
+                  </div>
+                  <span className="text-zinc-400 font-medium tracking-wide">Camera is off</span>
+                </div>
+              )}
+              
+              {/* Overlay Badge */}
+              <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full flex items-center gap-2">
+                 <span className={`block w-2 h-2 rounded-full ${videoEnabled ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500'}`} />
+                 <span className="text-xs font-medium text-white/90">Preview</span>
+              </div>
+            </div>
+
+            {/* Media Controls */}
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => setAudioEnabled(!audioEnabled)}
+                className={`flex items-center gap-3 px-6 py-3 rounded-xl font-medium transition-all duration-200 border ${
+                  audioEnabled 
+                  ? 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-white' 
+                  : 'bg-red-500/10 hover:bg-red-500/20 border-red-500/20 text-red-400'
+                }`}
+              >
+                {audioEnabled ? <Icons.MicOn /> : <Icons.MicOff />}
+                <span className="hidden sm:inline">{audioEnabled ? 'Mic On' : 'Mic Off'}</span>
+              </button>
+              
+              <button
+                onClick={() => setVideoEnabled(!videoEnabled)}
+                className={`flex items-center gap-3 px-6 py-3 rounded-xl font-medium transition-all duration-200 border ${
+                  videoEnabled 
+                  ? 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-white' 
+                  : 'bg-red-500/10 hover:bg-red-500/20 border-red-500/20 text-red-400'
+                }`}
+              >
+                {videoEnabled ? <Icons.VideoOn /> : <Icons.VideoOff />}
+                <span className="hidden sm:inline">{videoEnabled ? 'Camera On' : 'Camera Off'}</span>
+              </button>
+            </div>
           </div>
-          <div className="media-controls" role="toolbar" aria-label="Media controls">
-            <button className={`media-btn${audioEnabled ? ' active' : ' off'}`} onClick={() => setAudioEnabled(!audioEnabled)} aria-label={audioEnabled ? 'Mute microphone' : 'Unmute microphone'} aria-pressed={audioEnabled}>
-              {audioEnabled ? '🎙️' : '🔇'}
-            </button>
-            <button className={`media-btn${videoEnabled ? ' active' : ' off'}`} onClick={() => setVideoEnabled(!videoEnabled)} aria-label={videoEnabled ? 'Turn off camera' : 'Turn on camera'} aria-pressed={videoEnabled}>
-              {videoEnabled ? '📹' : '🚫'}
-            </button>
+
+          {/* Right Column: Info & Action */}
+          <div className="w-full lg:flex-1 flex flex-col items-center lg:items-start text-center lg:text-left">
+            <div className="mb-6 inline-flex items-center px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold tracking-wider uppercase">
+              Secure Meeting
+            </div>
+
+            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-white mb-4">
+              Join the <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-cyan-300">Session</span>
+            </h1>
+            
+            <p className="text-zinc-400 text-lg mb-8 leading-relaxed max-w-md">
+              You are entering room <span className="font-mono text-zinc-200 bg-zinc-800/50 px-2 py-0.5 rounded border border-white/5">{code}</span>.
+              <br/>Please check your setup before connecting.
+            </p>
+
+            <div className="w-full max-w-md space-y-3">
+              <button 
+                onClick={() => handleJoin()}
+                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-semibold text-lg shadow-[0_0_20px_-5px_rgba(37,99,235,0.4)] transition-all transform hover:scale-[1.01] active:scale-[0.99] border border-blue-400/20"
+              >
+                Join Meeting
+              </button>
+              <button 
+                onClick={() => router.push('/dashboard')}
+                className="w-full bg-transparent hover:bg-zinc-800/50 text-zinc-400 hover:text-white py-3 rounded-xl font-medium transition-colors border border-transparent hover:border-white/5"
+              >
+                Return to Dashboard
+              </button>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem', width: '100%', maxWidth: 340 }}>
-            <button className="btn btn-outline" onClick={() => router.push('/dashboard')} style={{ flex: 1 }}>Cancel</button>
-            <button className="btn btn-primary btn-lg" onClick={() => handleJoin()} style={{ flex: 2 }}>Join Meeting →</button>
-          </div>
-          <p style={{ color: 'var(--muted-light)', fontSize: '0.7rem', marginTop: '1.25rem' }}>
-            Shortcuts: <kbd>M</kbd> mute · <kbd>V</kbd> camera · <kbd>L</kbd> leave
-          </p>
         </div>
-      </div>
+      </Background>
     )
   }
 
+  // Password screen
   if (stage === 'password') {
     return (
-      <div className="page-center" role="main">
-        <div className="card" style={{ maxWidth: 420, width: '100%', padding: '2.5rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🔐</div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Password Required</h2>
-          <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>This room is password-protected.</p>
-          <form onSubmit={(e) => { e.preventDefault(); handleJoin(password) }} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter room password" required autoFocus aria-label="Room password" style={{ textAlign: 'center' }} />
-            <button type="submit" className="btn btn-primary btn-full">Join Meeting →</button>
+      <Background>
+        <GlassCard>
+          <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-6 ring-1 ring-red-500/20">
+            <Icons.Lock />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">Password Protected</h2>
+          <p className="text-zinc-400 mb-8 text-sm">Please enter the credentials to access this room.</p>
+          
+          <form onSubmit={(e) => { e.preventDefault(); handleJoin(password) }} className="w-full flex flex-col gap-4">
+            <input 
+              type="password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              placeholder="••••••••" 
+              required 
+              autoFocus 
+              className="w-full bg-zinc-950/50 border border-zinc-700 rounded-xl px-4 py-3.5 text-center text-white placeholder-zinc-600 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono tracking-widest"
+            />
+            <button type="submit" className="w-full bg-white text-black hover:bg-zinc-200 py-3.5 rounded-xl font-bold shadow-lg transition-colors mt-2">
+              Unlock Room
+            </button>
           </form>
-          <button onClick={() => router.push('/dashboard')} className="btn btn-ghost btn-sm" style={{ marginTop: '1rem' }}>← Back to Dashboard</button>
-        </div>
-      </div>
+          <button onClick={() => router.push('/dashboard')} className="mt-6 text-xs text-zinc-500 hover:text-zinc-300 transition-colors uppercase tracking-wider font-semibold">Cancel</button>
+        </GlassCard>
+      </Background>
     )
   }
 
+  // Lobby / waiting room
   if (stage === 'lobby') {
     return (
-      <div className="page-center" role="main">
-        <div className="card" style={{ maxWidth: 420, width: '100%', padding: '2.5rem', textAlign: 'center' }}>
-          <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', fontSize: '1.5rem', animation: 'pulse-glow 2s ease-in-out infinite' }}>⏳</div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.35rem' }}>Waiting Room</h2>
-          <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>The host will let you in shortly...</p>
-          <button onClick={() => router.push('/dashboard')} className="btn btn-outline btn-sm">← Leave</button>
-        </div>
-      </div>
+      <Background>
+        <GlassCard>
+          <div className="mb-8 p-4 bg-zinc-950/30 rounded-full">
+            <Spinner />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-3">Waiting Room</h2>
+          <p className="text-zinc-400 mb-8 max-w-[280px] leading-relaxed text-sm">
+            We&apos;ve notified the host. You will be admitted automatically once approved.
+          </p>
+          <button onClick={() => router.push('/dashboard')} className="text-zinc-500 hover:text-white transition-colors text-sm font-medium">
+            Cancel Request
+          </button>
+        </GlassCard>
+      </Background>
     )
   }
 
+  // Connecting
   if (stage === 'connecting') {
     return (
-      <div className="page-center" role="main">
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', fontSize: '1.5rem', animation: 'pulse-glow 2s ease-in-out infinite' }}>🔗</div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.35rem' }}>Joining meeting...</h2>
-          <p style={{ color: 'var(--muted)', fontSize: '0.85rem', fontFamily: 'monospace', letterSpacing: '0.15em' }}>{code}</p>
+      <Background>
+        <div className="flex flex-col items-center gap-8">
+           <div className="relative">
+             <div className="absolute inset-0 bg-blue-500 blur-xl opacity-20 animate-pulse"></div>
+             <Spinner />
+           </div>
+          <div className="text-center">
+            <h2 className="text-lg font-medium text-white tracking-wide">Connecting securely...</h2>
+            <p className="font-mono text-xs text-zinc-500 mt-2">E2EE • {code}</p>
+          </div>
         </div>
-      </div>
+      </Background>
     )
   }
 
+  // Error
   if (stage === 'error') {
     return (
-      <div className="page-center" role="main">
-        <div className="card" style={{ maxWidth: 420, width: '100%', padding: '2.5rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>❌</div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--danger)' }}>Cannot Join Room</h2>
-          <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>{error}</p>
-          <button onClick={() => router.push('/dashboard')} className="btn btn-primary btn-lg">Back to Dashboard</button>
-        </div>
-      </div>
+      <Background>
+        <GlassCard className="border-red-500/10">
+          <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-6 ring-1 ring-red-500/20">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">Connection Failed</h2>
+          <p className="text-zinc-400 mb-8">{error}</p>
+          <button onClick={() => router.push('/dashboard')} className="bg-zinc-800 hover:bg-zinc-700 text-white px-8 py-3 rounded-xl font-medium transition-all w-full border border-white/5">Back to Dashboard</button>
+        </GlassCard>
+      </Background>
     )
   }
 
-  // Connected
+  // ===== CONNECTED =====
   return (
-    <div style={{ height: '100vh', width: '100vw', overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--background)' }} role="main">
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 1rem', background: 'var(--card-bg)', backdropFilter: 'var(--backdrop-blur)', borderBottom: '1px solid var(--border)', zIndex: 10, flexShrink: 0, flexWrap: 'wrap', gap: '0.5rem' }} role="banner">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexWrap: 'wrap' }}>
-          <span className="brand-logo" style={{ fontSize: '0.9rem' }}>InterMeet</span>
-          <span style={{ color: 'var(--border)', fontSize: '0.8rem' }}>|</span>
-          <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{roomName}</span>
-          <span className="hide-mobile" style={{ color: 'var(--muted-light)', fontSize: '0.7rem', fontFamily: 'monospace', letterSpacing: '0.08em' }}>{roomCode}</span>
-          <span className="participant-badge">{participantCount}/{maxParticipants}</span>
-          <NetworkQuality />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
-          <Reactions />
-          <button className={`copy-btn${copied ? ' copied' : ''}`} onClick={copyInviteLink}>{copied ? '✓ Copied' : '📋 Invite'}</button>
-          {isCreator && <button className="btn btn-outline btn-sm" onClick={() => setShowBreakout(!showBreakout)}>{showBreakout ? '✕ Close' : '🔀 Breakout'}</button>}
-          {isCreator && <button className="btn btn-danger btn-sm" onClick={handleEndMeeting} disabled={ending}>{ending ? 'Ending...' : 'End Meeting'}</button>}
-        </div>
-      </div>
-
-      {/* Lobby bar for creator */}
-      {isCreator && lobbyEntries.length > 0 && (
-        <div style={{ padding: '0.5rem 1rem', background: 'var(--success-bg)', borderBottom: '1px solid var(--success-border)', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', flexShrink: 0 }} role="alert">
-          <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>Waiting:</span>
-          {lobbyEntries.map((e) => (
-            <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-              <span style={{ fontSize: '0.8rem' }}>{e.display_name}</span>
-              <button className="btn btn-primary btn-sm" style={{ padding: '0.15rem 0.4rem', fontSize: '0.7rem' }} onClick={() => handleAdmitReject(e.user_id, 'admit')}>Admit</button>
-              <button className="btn btn-danger btn-sm" style={{ padding: '0.15rem 0.4rem', fontSize: '0.7rem' }} onClick={() => handleAdmitReject(e.user_id, 'reject')}>Reject</button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Breakout panel */}
-      {showBreakout && isCreator && (
-        <div style={{ padding: '0.75rem 1rem', background: 'var(--card-bg)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: breakoutRooms.length > 0 ? '0.75rem' : 0 }}>
-            <input className="input" value={breakoutName} onChange={(e) => setBreakoutName(e.target.value)} placeholder="Breakout room name" maxLength={100} style={{ flex: 1, padding: '0.375rem 0.625rem', fontSize: '0.8rem' }} />
-            <button className="btn btn-primary btn-sm" onClick={handleCreateBreakout} disabled={creatingBreakout}>{creatingBreakout ? 'Creating...' : 'Create'}</button>
-          </div>
-          {breakoutRooms.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              {breakoutRooms.map((br) => (
-                <div key={br.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.375rem 0.625rem', background: 'var(--input-bg)', borderRadius: 6, fontSize: '0.8rem' }}>
-                  <span style={{ fontWeight: 500 }}>{br.name}</span>
-                  <span className="participant-badge">{br.participantCount}</span>
-                  <button className="btn btn-secondary btn-sm" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} onClick={() => window.open(`/room/${br.room_code}`, '_blank')}>Join</button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Main content */}
-      <div style={{ flex: 1, overflow: 'hidden' }}>
-        <LiveKitRoom token={token} serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL} connect={true} video={videoEnabled} audio={audioEnabled} onDisconnected={handleDisconnect} data-lk-theme="default" style={{ height: '100%', width: '100%' }}>
-          <VideoConference />
-        </LiveKitRoom>
-      </div>
-    </div>
+    <DarkThemeProvider>
+      <LiveKitRoom
+        token={token}
+        serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
+        connect={true}
+        video={videoEnabled}
+        audio={audioEnabled}
+        onDisconnected={handleDisconnect}
+        data-lk-theme="default"
+        style={{ height: '100vh', width: '100vw', background: '#09090b' }}
+      >
+        <MeetingView
+          roomName={roomName}
+          roomCode={code}
+          isCreator={isCreator}
+          maxParticipants={maxParticipants}
+          copied={copied}
+          ending={ending}
+          lobbyEntries={lobbyEntries}
+          onCopyInvite={copyInviteLink}
+          onEndMeeting={handleEndMeeting}
+          onAdmitReject={handleAdmitReject}
+        />
+      </LiveKitRoom>
+    </DarkThemeProvider>
   )
 }

@@ -9,7 +9,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { roomCode } = await request.json()
+  let body: { roomCode?: string }
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+  }
+
+  const { roomCode } = body
 
   if (!roomCode || typeof roomCode !== 'string') {
     return NextResponse.json({ error: 'Room code is required' }, { status: 400 })

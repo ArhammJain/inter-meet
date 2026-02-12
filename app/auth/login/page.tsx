@@ -34,25 +34,25 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="page-center">
-      <div style={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 50 }}>
+    <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-4 relative">
+      <div className="absolute top-4 right-4 z-50">
         <ThemeSwitcher />
       </div>
 
-      <div className="card" style={{ width: '100%', maxWidth: 420, padding: '2.5rem' }}>
+      <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl p-8 shadow-sm">
         {/* Brand */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <Link href="/" className="brand-logo" style={{ fontSize: '1.5rem', display: 'inline-block', marginBottom: '0.5rem' }}>InterMeet</Link>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.35rem' }}>Welcome back</h2>
-          <p style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>Sign in to your account</p>
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-block text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 mb-2">InterMeet</Link>
+          <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Welcome back</h2>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Sign in to your account</p>
         </div>
 
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-            <label className="input-label">Email</label>
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div className="space-y-1.5">
+            <label className="text-sm font-bold text-zinc-700 dark:text-zinc-300">Email</label>
             <input
               type="email"
-              className="input"
+              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder-zinc-400"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
@@ -61,11 +61,11 @@ export default function LoginPage() {
             />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-            <label className="input-label">Password</label>
+          <div className="space-y-1.5">
+            <label className="text-sm font-bold text-zinc-700 dark:text-zinc-300">Password</label>
             <input
               type="password"
-              className="input"
+              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder-zinc-400"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -75,16 +75,20 @@ export default function LoginPage() {
             />
           </div>
 
-          <button type="submit" disabled={loading} className="btn btn-primary btn-full" style={{ marginTop: '0.25rem' }}>
+          <button 
+            type="submit" 
+            disabled={loading} 
+            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/30 hover:-translate-y-0.5 mt-2"
+          >
             {loading ? 'Signing in...' : 'Sign In →'}
           </button>
         </form>
 
-        <hr className="divider" />
+        <hr className="my-8 border-t border-zinc-200 dark:border-white/10" />
 
-        <p style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--muted)' }}>
+        <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
           Don&apos;t have an account?{' '}
-          <Link href="/auth/signup" style={{ color: 'var(--primary)', fontWeight: 600 }}>
+          <Link href="/auth/signup" className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">
             Create one
           </Link>
         </p>

@@ -27,16 +27,16 @@ export default class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback
 
       return (
-        <div className="page-center">
-          <div className="card" style={{ maxWidth: 400, width: '100%', padding: '2rem', textAlign: 'center' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.75rem', color: 'var(--danger)' }}>
+        <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-4">
+          <div className="w-full max-w-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl p-8 text-center shadow-xl">
+            <h2 className="text-xl font-bold mb-3 text-red-600 dark:text-red-500">
               Something went wrong
             </h2>
-            <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6 leading-relaxed">
               {this.state.error?.message || 'An unexpected error occurred.'}
             </p>
             <button
-              className="btn btn-primary"
+              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-sm transition-colors shadow-lg shadow-indigo-600/20"
               onClick={() => {
                 this.setState({ hasError: false, error: null })
                 window.location.reload()

@@ -144,7 +144,15 @@ export async function POST(request: Request) {
     user_id: user.id,
   })
 
+  // Fetch avatar for metadata
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('avatar_url')
+    .eq('id', user.id)
+    .single()
+
   const displayName = user.user_metadata?.full_name || user.email || 'Anonymous'
+  const avatarUrl = profile?.avatar_url || user.user_metadata?.avatar_url || null
 
   const token = new AccessToken(
     process.env.LIVEKIT_API_KEY,
@@ -152,6 +160,7 @@ export async function POST(request: Request) {
     {
       identity: user.id,
       name: displayName,
+      metadata: JSON.stringify({ avatar_url: avatarUrl }),
       ttl: '6h',
     }
   )
