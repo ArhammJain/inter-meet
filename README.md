@@ -1,6 +1,8 @@
-# InterMeet
+<h1 align="center" id="title">InterMeet</h1>
 
 <div align="center">
+   
+<p align="center"><img src="https://socialify.git.ci/ArhammJain/inter-meet/image?custom_language=Next.js&language=1&name=1&owner=1&pattern=Solid&stargazers=1&theme=Dark" alt="inter-meet" width="640" height="320" /></p>
 
 **InterMeet: A sophisticated, real time video conferencing platform built for the modern web**
 
@@ -9,9 +11,6 @@
 [![Supabase](https://img.shields.io/badge/Supabase-2.95.3-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19.2.3-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
-
-![InterMeet Hero](https://images.unsplash.com/photo-1616588589676-60b30c3c2b0c?q=80&w=2600&auto=format&fit=crop)
-
 </div>
 
 ---
@@ -1186,12 +1185,6 @@ InterMeet implements multiple layers of security:
 
 ---
 
-## 📄 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
----
-
 ## 🙏 Acknowledgments
 
 - **LiveKit** for the robust WebRTC infrastructure
@@ -1201,11 +1194,15 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ---
 
-## 📞 Support
+<h2>👨‍💻 Author</h2>
 
-- **Documentation**: [InterMeet Docs](https://docs.intermeet.app) _(placeholder)_
-- **Issues**: [GitHub Issues](https://github.com/yourusername/inter-meet/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/inter-meet/discussions)
+**Arham Jain**
+- Linkedin: [arhamchhajed](https://www.linkedin.com/in/arhamchhajed)
+- Instagram: [V5Arham](https://instagram.com/v5arham)
+
+<h2>⭐ Star History</h2>
+
+If you find this project useful, please consider giving it a star! ⭐
 
 ---
 
@@ -1213,6 +1210,6 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 **Built with ❤️ using Next.js 16, LiveKit, and Supabase**
 
-[Demo](https://intermeet.vercel.app) • [Documentation](https://docs.intermeet.app) • [Report Bug](https://github.com/yourusername/inter-meet/issues)
+[Demo](https://intermeet-arham.vercel.app) • [Report Bug](https://github.com/yourusername/inter-meet/issues)
 
 </div>
