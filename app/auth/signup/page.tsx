@@ -80,7 +80,7 @@ export default function SignupPage() {
             </div>
             <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Check your inbox</h3>
             <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed mb-6">
-              We've sent a verification link to <br/>
+              We&apos;ve sent a verification link to <br/>
               <span className="font-semibold text-zinc-900 dark:text-white bg-white dark:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">{email}</span>
             </p>
             <p className="text-xs text-zinc-400 dark:text-zinc-500">
