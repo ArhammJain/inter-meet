@@ -8,6 +8,7 @@ import {
 import '@livekit/components-styles'
 import { useToast } from '@/components/Toast'
 import MeetingView from '@/components/MeetingView'
+import Navbar from '@/components/Navbar'
 import { createClient } from '@/lib/supabase/client'
 
 // --- Logic & Types (Unchanged) ---
@@ -38,27 +39,28 @@ function playSound(type: 'join' | 'leave') {
 // --- UI Components (Redesigned) ---
 
 // 1. Theme Provider Wrapper
-const DarkThemeProvider = ({ children }: { children: React.ReactNode }) => (
-  <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-blue-500/30 selection:text-blue-50">
+const RoomThemeProvider = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans selection:bg-blue-500/30 selection:text-blue-50">
     {children}
   </div>
 )
 
 // 2. Background with Premium Depth (No Purple)
 const Background = ({ children }: { children: React.ReactNode }) => (
-  <DarkThemeProvider>
-    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden">
+  <RoomThemeProvider>
+    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-zinc-50 dark:bg-zinc-950 transition-colors duration-300">
       {/* Subtle Lighting Effects */}
-      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(30,58,138,0.15),transparent_40%)]" />
-      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-blue-900/5 rounded-full blur-[100px]" />
-      <div className="relative z-10 w-full h-full flex flex-col">{children}</div>
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(30,58,138,0.15),transparent_40%)] opacity-30 dark:opacity-100" />
+      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[100px]" />
+      <Navbar />
+      <div className="relative z-10 w-full h-full flex flex-col pt-24 md:pt-32 px-4">{children}</div>
     </div>
-  </DarkThemeProvider>
+  </RoomThemeProvider>
 )
 
 // 3. High-End Glass Card
 const GlassCard = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
-  <div className={`bg-zinc-900/60 backdrop-blur-xl border border-white/5 shadow-2xl rounded-2xl p-8 sm:p-10 flex flex-col items-center text-center max-w-md w-full mx-auto relative overflow-hidden ${className}`}>
+  <div className={`bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl border border-zinc-200 dark:border-white/5 shadow-2xl rounded-2xl p-8 sm:p-10 flex flex-col items-center text-center max-w-md w-full mx-auto relative overflow-hidden transition-all duration-300 ${className}`}>
     <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-blue-600/0 via-blue-500/50 to-blue-600/0 opacity-50" />
     {children}
   </div>
@@ -86,12 +88,13 @@ export default function RoomPage() {
   const router = useRouter()
   const code = params.code as string
   const { toast } = useToast()
+  const toastRef = useRef(toast)
+  useEffect(() => { toastRef.current = toast }, [toast])
   const supabase = createClient()
 
   const [stage, setStage] = useState<Stage>('prejoin')
   const [token, setToken] = useState('')
   const [roomName, setRoomName] = useState('')
-  const [roomCode, setRoomCode] = useState('')
   const [isCreator, setIsCreator] = useState(false)
   const [maxParticipants, setMaxParticipants] = useState(10)
   const [waitingRoomEnabled, setWaitingRoomEnabled] = useState(false)
@@ -128,12 +131,41 @@ export default function RoomPage() {
     if (stage !== 'prejoin') return
     let cancelled = false
     const start = async () => {
+      const constraints: MediaStreamConstraints = { video: videoEnabled, audio: audioEnabled }
+      // Don't request if both are off
+      if (!videoEnabled && !audioEnabled) return
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: videoEnabled, audio: audioEnabled })
+        const stream = await navigator.mediaDevices.getUserMedia(constraints)
         if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return }
         streamRef.current = stream
         if (videoRef.current) videoRef.current.srcObject = stream
-      } catch { /* ignore */ }
+      } catch (err) {
+        const name = (err as DOMException)?.name
+        if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+          // Device not available — try falling back
+          if (videoEnabled && audioEnabled) {
+            // Try audio-only first
+            try {
+              const fallback = await navigator.mediaDevices.getUserMedia({ video: false, audio: true })
+              if (cancelled) { fallback.getTracks().forEach((t) => t.stop()); return }
+              streamRef.current = fallback
+              if (videoRef.current) videoRef.current.srcObject = fallback
+              setVideoEnabled(false)
+              toastRef.current('Camera not found — joining with audio only', 'error')
+              return
+            } catch {
+              // No audio either
+            }
+          }
+          if (videoEnabled) { setVideoEnabled(false); toastRef.current('Camera not found on this device', 'error') }
+          if (audioEnabled) { setAudioEnabled(false); toastRef.current('Microphone not found on this device', 'error') }
+        } else if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+          toastRef.current('Permission denied — please allow camera/mic access', 'error')
+          if (videoEnabled) setVideoEnabled(false)
+          if (audioEnabled) setAudioEnabled(false)
+        }
+        // Other errors silently ignored (e.g. AbortError, OverconstrainedError)
+      }
     }
     start()
     return () => { cancelled = true; streamRef.current?.getTracks().forEach((t) => t.stop()); streamRef.current = null }
@@ -160,7 +192,7 @@ export default function RoomPage() {
         }
         setError(data.error || 'Failed to join'); setStage('error'); return
       }
-      setToken(data.token); setRoomName(data.roomName); setRoomCode(data.roomCode)
+      setToken(data.token); setRoomName(data.roomName)
       setIsCreator(data.isCreator)
       setMaxParticipants(data.maxParticipants); setWaitingRoomEnabled(data.waitingRoomEnabled)
       setStage('connected'); playSound('join')
@@ -288,7 +320,7 @@ export default function RoomPage() {
               Secure Meeting
             </div>
 
-            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-white mb-4">
+            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-indigo-400 dark:text-white mb-4">
               Join the <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-cyan-300">Session</span>
             </h1>
             
@@ -325,8 +357,8 @@ export default function RoomPage() {
           <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-6 ring-1 ring-red-500/20">
             <Icons.Lock />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Password Protected</h2>
-          <p className="text-zinc-400 mb-8 text-sm">Please enter the credentials to access this room.</p>
+          <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">Password Protected</h2>
+          <p className="text-zinc-500 dark:text-zinc-400 mb-8 text-sm">Please enter the credentials to access this room.</p>
           
           <form onSubmit={(e) => { e.preventDefault(); handleJoin(password) }} className="w-full flex flex-col gap-4">
             <input 
@@ -353,11 +385,11 @@ export default function RoomPage() {
     return (
       <Background>
         <GlassCard>
-          <div className="mb-8 p-4 bg-zinc-950/30 rounded-full">
+          <div className="mb-8 p-4 bg-zinc-100 dark:bg-zinc-950/30 rounded-full">
             <Spinner />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-3">Waiting Room</h2>
-          <p className="text-zinc-400 mb-8 max-w-[280px] leading-relaxed text-sm">
+          <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-3">Waiting Room</h2>
+          <p className="text-zinc-500 dark:text-zinc-400 mb-8 max-w-[280px] leading-relaxed text-sm">
             We&apos;ve notified the host. You will be admitted automatically once approved.
           </p>
           <button onClick={() => router.push('/dashboard')} className="text-zinc-500 hover:text-white transition-colors text-sm font-medium">
@@ -404,7 +436,8 @@ export default function RoomPage() {
 
   // ===== CONNECTED =====
   return (
-    <DarkThemeProvider>
+    <RoomThemeProvider>
+      <Navbar />
       <LiveKitRoom
         token={token}
         serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
@@ -413,7 +446,7 @@ export default function RoomPage() {
         audio={audioEnabled}
         onDisconnected={handleDisconnect}
         data-lk-theme="default"
-        style={{ height: '100vh', width: '100vw', background: '#09090b' }}
+        style={{ height: '100vh', width: '100vw' }}
       >
         <MeetingView
           roomName={roomName}
@@ -424,10 +457,11 @@ export default function RoomPage() {
           ending={ending}
           lobbyEntries={lobbyEntries}
           onCopyInvite={copyInviteLink}
+          onLeave={handleDisconnect}
           onEndMeeting={handleEndMeeting}
           onAdmitReject={handleAdmitReject}
         />
       </LiveKitRoom>
-    </DarkThemeProvider>
+    </RoomThemeProvider>
   )
 }

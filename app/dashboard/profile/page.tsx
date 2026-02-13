@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useToast } from '@/components/Toast'
-import ThemeSwitcher from '@/components/ThemeSwitcher'
+import Navbar from '@/components/Navbar'
 import type { User } from '@supabase/supabase-js'
 import { Camera, Loader2 } from 'lucide-react'
 import Image from 'next/image'
@@ -156,10 +156,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-4 relative">
-      <div className="absolute top-4 right-4 z-50">
-        <ThemeSwitcher />
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-4 relative pt-24 md:pt-32">
+      <Navbar />
 
       <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl p-8 shadow-sm">
         <button

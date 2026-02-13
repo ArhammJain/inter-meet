@@ -33,7 +33,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="bg-background text-foreground antialiased font-sans">
+      <body className="bg-background text-foreground antialiased font-sans" suppressHydrationWarning>
         <ErrorBoundary>
           <ToastProvider>
             {children}
