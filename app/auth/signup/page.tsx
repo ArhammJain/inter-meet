@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useToast } from '@/components/Toast'
 import Link from 'next/link'
 import ThemeSwitcher from '@/components/ThemeSwitcher'
+import { Mail, Lock, User, Loader2, ArrowRight, CheckCircle2 } from 'lucide-react'
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState('')
@@ -45,85 +46,143 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-4 relative">
-      <div className="absolute top-4 right-4 z-50">
+    <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA] dark:bg-[#09090B] p-4 relative overflow-hidden font-sans selection:bg-[#2057CC]/20 selection:text-[#2057CC]">
+      {/* Premium Background Effects */}
+      <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-[#2057CC]/5 blur-[120px] rounded-full mix-blend-multiply dark:mix-blend-screen pointer-events-none" />
+      <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-indigo-500/5 blur-[120px] rounded-full mix-blend-multiply dark:mix-blend-screen pointer-events-none" />
+      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.03] dark:opacity-[0.05] pointer-events-none" />
+
+      {/* Theme Switcher */}
+      <div className="absolute top-6 right-6 z-50">
         <ThemeSwitcher />
       </div>
 
-      <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl p-8 shadow-sm">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-block text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 mb-2">InterMeet</Link>
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Create your account</h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Get started with free video conferencing</p>
+      {/* Glass Card */}
+      <div className="w-full max-w-[440px] bg-white/70 dark:bg-zinc-900/60 backdrop-blur-2xl border border-white/20 dark:border-white/5 rounded-[2rem] p-8 md:p-10 shadow-2xl ring-1 ring-black/5 relative z-10 transition-all duration-300 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)]">
+        
+        {/* Brand Header */}
+        <div className="flex flex-col items-center mb-8">
+          <Link href="/" className="mb-6 group">
+            <div className="w-12 h-12 rounded-2xl bg-[#2057CC] flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-[#2057CC]/30 transition-transform group-hover:scale-110 group-hover:-rotate-3">
+              IM
+            </div>
+          </Link>
+          <h2 className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">Create Account</h2>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-2 font-medium text-center max-w-[280px]">
+            Join InterMeet for seamless, high-fidelity video collaboration.
+          </p>
         </div>
 
         {success ? (
-          <div className="text-center p-6 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-500/20 rounded-xl space-y-2">
-            <div className="text-4xl mb-2">📧</div>
-            <p className="font-bold text-green-800 dark:text-green-400">Check your email!</p>
-            <p className="text-sm text-green-700 dark:text-green-300">We sent a confirmation link to <strong className="font-semibold">{email}</strong></p>
+          <div className="flex flex-col items-center text-center p-8 bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-500/20 rounded-3xl animate-in zoom-in-95 duration-300">
+            <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mb-4 ring-4 ring-emerald-50 dark:ring-emerald-900/10">
+                <CheckCircle2 className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Check your inbox</h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed mb-6">
+              We've sent a verification link to <br/>
+              <span className="font-semibold text-zinc-900 dark:text-white bg-white dark:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">{email}</span>
+            </p>
+            <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                Click the link to activate your account.
+            </p>
           </div>
         ) : (
           <form onSubmit={handleSignup} className="space-y-5">
+            {/* Full Name Input */}
             <div className="space-y-1.5">
-              <label className="text-sm font-bold text-zinc-700 dark:text-zinc-300">Full Name</label>
-              <input
-                type="text"
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder-zinc-400"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="John Doe"
-                required
-                maxLength={100}
-                autoComplete="name"
-              />
+              <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-1">Full Name</label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-[#2057CC] transition-colors">
+                  <User className="w-5 h-5" />
+                </div>
+                <input
+                  type="text"
+                  className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200 dark:border-zinc-800 rounded-xl pl-11 pr-4 py-3.5 outline-none focus:ring-2 focus:ring-[#2057CC]/10 focus:border-[#2057CC] transition-all placeholder-zinc-400 text-zinc-900 dark:text-white font-medium"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="John Doe"
+                  required
+                  maxLength={100}
+                  autoComplete="name"
+                />
+              </div>
             </div>
 
+            {/* Email Input */}
             <div className="space-y-1.5">
-              <label className="text-sm font-bold text-zinc-700 dark:text-zinc-300">Email</label>
-              <input
-                type="email"
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder-zinc-400"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-                autoComplete="email"
-              />
+              <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-1">Email</label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-[#2057CC] transition-colors">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <input
+                  type="email"
+                  className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200 dark:border-zinc-800 rounded-xl pl-11 pr-4 py-3.5 outline-none focus:ring-2 focus:ring-[#2057CC]/10 focus:border-[#2057CC] transition-all placeholder-zinc-400 text-zinc-900 dark:text-white font-medium"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@work.com"
+                  required
+                  autoComplete="email"
+                />
+              </div>
             </div>
 
+            {/* Password Input */}
             <div className="space-y-1.5">
-              <label className="text-sm font-bold text-zinc-700 dark:text-zinc-300">Password</label>
-              <input
-                type="password"
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder-zinc-400"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min 6 characters"
-                required
-                minLength={6}
-                autoComplete="new-password"
-              />
+              <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-1">Password</label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-[#2057CC] transition-colors">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <input
+                  type="password"
+                  className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200 dark:border-zinc-800 rounded-xl pl-11 pr-4 py-3.5 outline-none focus:ring-2 focus:ring-[#2057CC]/10 focus:border-[#2057CC] transition-all placeholder-zinc-400 text-zinc-900 dark:text-white font-medium"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Min 6 characters"
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                />
+              </div>
             </div>
 
             <button 
               type="submit" 
               disabled={loading} 
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/30 hover:-translate-y-0.5 mt-2"
+              className="w-full py-4 bg-[#2057CC] hover:bg-[#1a49ad] disabled:opacity-70 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-[0_4px_14px_0_rgba(32,87,204,0.39)] hover:shadow-[0_6px_20px_rgba(32,87,204,0.23)] hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 mt-4"
             >
-              {loading ? 'Creating account...' : 'Create Account →'}
+              {loading ? (
+                  <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Creating Account...</span>
+                  </>
+              ) : (
+                  <>
+                      <span>Get Started</span>
+                      <ArrowRight className="w-5 h-5 opacity-80" />
+                  </>
+              )}
             </button>
           </form>
         )}
 
-        <hr className="my-8 border-t border-zinc-200 dark:border-white/10" />
-
-        <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
-          Already have an account?{' '}
-          <Link href="/auth/login" className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">
-            Sign in
-          </Link>
-        </p>
+        <div className="mt-8 pt-6 border-t border-zinc-100 dark:border-white/5 text-center">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            Already have an account?{' '}
+            <Link href="/auth/login" className="text-[#2057CC] font-bold hover:text-[#1a49ad] transition-colors">
+              Sign in
+            </Link>
+          </p>
+        </div>
+      </div>
+      
+      {/* Footer Copyright */}
+      <div className="absolute bottom-6 text-center pointer-events-none">
+         <p className="text-xs text-zinc-400 dark:text-zinc-600 font-medium">
+            © InterMeet Inc. Secure Sign-up.
+         </p>
       </div>
     </div>
   )
