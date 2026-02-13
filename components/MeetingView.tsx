@@ -6,6 +6,8 @@ import {
   useTracks,
   useLocalParticipant,
   VideoTrack,
+  RoomAudioRenderer,
+  useSpeakingParticipants,
 } from '@livekit/components-react'
 import { RoomEvent, Track, Participant } from 'livekit-client'
 import ChatSidebar from './ChatSidebar'
@@ -85,6 +87,7 @@ const ControlButton = ({
 export default function MeetingView(props: Props) {
   const room = useRoomContext()
   const { localParticipant } = useLocalParticipant()
+  const activeSpeakers = useSpeakingParticipants()
   
   const tracks = useTracks(
     [
@@ -99,6 +102,7 @@ export default function MeetingView(props: Props) {
   const [showEmoji, setShowEmoji] = useState(false)
   const [showMoreMenu, setShowMoreMenu] = useState(false)
   const [showEndMenu, setShowEndMenu] = useState(false)
+  const [reactions, setReactions] = useState<Map<string, string>>(new Map())
 
   const [hands, setHands] = useState<Set<string>>(new Set())
   const [myHand, setMyHand] = useState(false)
@@ -163,6 +167,16 @@ export default function MeetingView(props: Props) {
         if (msg.type === 'hand') {
           setHands(prev => { const s = new Set(prev); if (msg.raised) s.add(identity); else s.delete(identity); return s })
         }
+        if (msg.type === 'reaction') {
+          setReactions(prev => new Map(prev).set(identity, msg.emoji))
+          setTimeout(() => {
+            setReactions(prev => {
+              const newMap = new Map(prev)
+              newMap.delete(identity)
+              return newMap
+            })
+          }, 4000)
+        }
       } catch { /* ignore */ }
     }
     room.on(RoomEvent.DataReceived, onData)
@@ -170,6 +184,16 @@ export default function MeetingView(props: Props) {
   }, [room])
 
   const sendReaction = useCallback((emoji: string) => {
+    const identity = room.localParticipant.identity
+    setReactions(prev => new Map(prev).set(identity, emoji))
+    setTimeout(() => {
+      setReactions(prev => {
+        const newMap = new Map(prev)
+        newMap.delete(identity)
+        return newMap
+      })
+    }, 4000)
+
     try {
       room.localParticipant.publishData(new TextEncoder().encode(JSON.stringify({ type: 'reaction', emoji })), { reliable: true })
     } catch { /* ignore */ }
@@ -224,6 +248,7 @@ export default function MeetingView(props: Props) {
 
   return (
     <div className="flex h-[100dvh] bg-zinc-950 text-zinc-100 overflow-hidden font-sans selection:bg-indigo-500/30">
+      <RoomAudioRenderer />
       
       {/* ── Main Canvas ── */}
       <div className="flex-1 min-w-0 flex flex-col relative h-full transition-all duration-300 ease-in-out">
@@ -244,7 +269,11 @@ export default function MeetingView(props: Props) {
                 {tracks.map(track => (
                   <div 
                     key={track.publication?.trackSid || track.participant.identity} 
-                    className="relative w-full aspect-[16/9] sm:aspect-video bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 shadow-2xl ring-1 ring-white/5 group"
+                    className={`relative w-full aspect-[16/9] sm:aspect-video bg-zinc-900 rounded-2xl overflow-hidden border shadow-2xl transition-all duration-200 group ${
+                      activeSpeakers.some(p => p.identity === track.participant.identity)
+                        ? 'border-emerald-500 ring-2 ring-emerald-500/50 shadow-[0_0_30px_-10px_rgba(16,185,129,0.5)]'
+                        : 'border-white/5 ring-1 ring-white/5'
+                    }`}
                   >
                     {/* Video Track or Avatar Fallback */}
                     {track.publication?.track && track.participant.isCameraEnabled ? (
@@ -261,7 +290,12 @@ export default function MeetingView(props: Props) {
                       </div>
                     )}
                     
-                    <div className="absolute top-2 right-2 flex gap-1">
+                    <div className="absolute top-2 right-2 flex gap-1 items-center z-40">
+                      {reactions.has(track.participant.identity) && (
+                        <div className="text-4xl animate-bounce drop-shadow-lg mr-2">
+                          {reactions.get(track.participant.identity)}
+                        </div>
+                      )}
                       <button 
                         onClick={(e) => { e.stopPropagation(); setPinnedId(pinnedId === track.participant.identity ? null : track.participant.identity) }}
                         className={`group flex items-center gap-1.5 px-2 py-1.5 rounded-xl border backdrop-blur-md transition-all active:scale-95 ${
@@ -301,7 +335,11 @@ export default function MeetingView(props: Props) {
             </div>
           ) : (
             <>
-          <div ref={stageRef} className="flex-1 relative rounded-3xl h-[620px] overflow-hidden bg-zinc-900 border border-white/5 shadow-2xl ring-1 ring-white/5 group">
+          <div ref={stageRef} className={`flex-1 relative rounded-3xl h-[620px] overflow-hidden bg-zinc-900 border shadow-2xl transition-all duration-200 group ${
+            focusTrack && activeSpeakers.some(p => p.identity === focusTrack.participant.identity)
+              ? 'border-emerald-500 ring-2 ring-emerald-500/50 shadow-[0_0_40px_-10px_rgba(16,185,129,0.6)]'
+              : 'border-white/5 ring-1 ring-white/5'
+          }`}>
             {!focusTrack && (
               <div className="relative z-10 w-full h-full flex flex-col items-center justify-center bg-zinc-900/50">
                 <div className="w-24 h-24 rounded-full bg-zinc-800 flex items-center justify-center animate-pulse border border-white/5 overflow-hidden">
@@ -330,32 +368,41 @@ export default function MeetingView(props: Props) {
             )}
             
             {/* Fullscreen & Stats Overlay */}
-            <div className="absolute top-4 right-4 z-30 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-               {focusTrack?.source === Track.Source.ScreenShare && (
-                 <button 
-                   onClick={toggleFullscreen}
-                   className="p-2.5 bg-black/60 hover:bg-black/80 text-white rounded-xl backdrop-blur-md border border-white/10 shadow-lg transition-all active:scale-95"
-                   title="Toggle Fullscreen"
-                 >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-                    </svg>
-                 </button>
+            {/* Fullscreen & Stats Overlay */}
+            <div className="absolute top-4 right-4 z-30 flex gap-2 items-center">
+               {focusTrack && reactions.has(focusTrack.participant.identity) && (
+                 <div className="text-6xl animate-bounce drop-shadow-xl mr-4">
+                    {reactions.get(focusTrack.participant.identity)}
+                 </div>
                )}
-               {focusTrack && (
-                 <button 
-                   onClick={() => setPinnedId(pinnedId === focusTrack.participant.identity ? null : focusTrack.participant.identity)}
-                   className={`flex items-center gap-2 p-2.5 rounded-xl border backdrop-blur-md shadow-lg transition-all active:scale-95 ${
-                     pinnedId === focusTrack.participant.identity 
-                       ? 'bg-indigo-600 text-white border-indigo-400' 
-                       : 'bg-black/60 hover:bg-black/80 text-white border-white/10'
-                   }`}
-                   title={pinnedId === focusTrack.participant.identity ? "Unpin" : "Pin"}
-                 >
-                    {pinnedId === focusTrack.participant.identity ? <PinOff size={18} /> : <Pin size={18} />}
-                    {pinnedId === focusTrack.participant.identity && <span className="text-xs font-bold uppercase tracking-widest px-1">Pinned</span>}
-                 </button>
-               )}
+               
+               <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                 {focusTrack?.source === Track.Source.ScreenShare && (
+                   <button 
+                     onClick={toggleFullscreen}
+                     className="p-2.5 bg-black/60 hover:bg-black/80 text-white rounded-xl backdrop-blur-md border border-white/10 shadow-lg transition-all active:scale-95"
+                     title="Toggle Fullscreen"
+                   >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                      </svg>
+                   </button>
+                 )}
+                 {focusTrack && (
+                   <button 
+                     onClick={() => setPinnedId(pinnedId === focusTrack.participant.identity ? null : focusTrack.participant.identity)}
+                     className={`flex items-center gap-2 p-2.5 rounded-xl border backdrop-blur-md shadow-lg transition-all active:scale-95 ${
+                       pinnedId === focusTrack.participant.identity 
+                         ? 'bg-indigo-600 text-white border-indigo-400' 
+                         : 'bg-black/60 hover:bg-black/80 text-white border-white/10'
+                     }`}
+                     title={pinnedId === focusTrack.participant.identity ? "Unpin" : "Pin"}
+                   >
+                      {pinnedId === focusTrack.participant.identity ? <PinOff size={18} /> : <Pin size={18} />}
+                      {pinnedId === focusTrack.participant.identity && <span className="text-xs font-bold uppercase tracking-widest px-1">Pinned</span>}
+                   </button>
+                 )}
+               </div>
             </div>
 
             <div className="absolute bottom-6 left-6 right-6 flex justify-between items-end pointer-events-none">
@@ -388,7 +435,11 @@ export default function MeetingView(props: Props) {
               {tracks.length > 1 && (
                 <div className="hidden lg:flex flex-col gap-3 w-[280px] h-full overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
                   {tracks.filter(t => t !== focusTrack).map(track => (
-                    <div key={track.publication?.trackSid || track.participant.identity} className="relative w-full aspect-video shrink-0 bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 ring-1 ring-white/5 cursor-pointer hover:ring-indigo-500/50 transition-all group">
+                    <div key={track.publication?.trackSid || track.participant.identity} className={`relative w-full aspect-video shrink-0 bg-zinc-900 rounded-2xl overflow-hidden border cursor-pointer hover:ring-indigo-500/50 transition-all group ${
+                       activeSpeakers.some(p => p.identity === track.participant.identity)
+                        ? 'border-emerald-500 ring-2 ring-emerald-500/50'
+                        : 'border-white/5 ring-1 ring-white/5'
+                    }`}>
 
                       {/* Video Track or Avatar Fallback */}
                       {track.publication?.track && track.participant.isCameraEnabled ? (
@@ -405,10 +456,17 @@ export default function MeetingView(props: Props) {
                         </div>
                       )}
 
-                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-30">
+                      <div className="absolute top-2 right-2 flex gap-1 z-30 items-center">
+                        {reactions.has(track.participant.identity) && (
+                          <div className="text-3xl animate-bounce drop-shadow-md mr-1">
+                            {reactions.get(track.participant.identity)}
+                          </div>
+                        )}
                         <button 
                           onClick={(e) => { e.stopPropagation(); setPinnedId(pinnedId === track.participant.identity ? null : track.participant.identity) }}
                           className={`flex items-center gap-1.5 p-1.5 rounded-lg border backdrop-blur-md transition-all ${
+                            pinnedId === track.participant.identity ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                          } ${
                             pinnedId === track.participant.identity 
                               ? 'bg-indigo-600 text-white border-indigo-400' 
                               : 'bg-black/40 text-white/70 border-white/10 hover:bg-black/60 hover:text-white'
@@ -577,8 +635,8 @@ export default function MeetingView(props: Props) {
                      
                      <ControlButton onClick={toggleCam} active={localParticipant.isCameraEnabled}>
                         {localParticipant.isCameraEnabled 
-                          ? <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                          : <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                          ? <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-video-icon lucide-video"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>
+                          : <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-video-off-icon lucide-video-off"><path d="M10.66 6H14a2 2 0 0 1 2 2v2.5l5.248-3.062A.5.5 0 0 1 22 7.87v8.196"/><path d="M16 16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2"/><path d="m2 2 20 20"/></svg>
                         }
                      </ControlButton>
 
@@ -622,8 +680,8 @@ export default function MeetingView(props: Props) {
                 </ControlButton>
                 <ControlButton onClick={toggleCam} active={localParticipant.isCameraEnabled} label={localParticipant.isCameraEnabled ? "Stop Video" : "Start Video"}>
                    {localParticipant.isCameraEnabled 
-                     ? <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                     : <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.66 6H14a2 2 0 0 1 2 2v2.5l5.248-3.062A.5.5 0 0 1 22 7.87v8.196"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m2 2 20 20"/></svg>
+                     ? <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-video-icon lucide-video"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>
+                     : <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-video-off-icon lucide-video-off"><path d="M10.66 6H14a2 2 0 0 1 2 2v2.5l5.248-3.062A.5.5 0 0 1 22 7.87v8.196"/><path d="M16 16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2"/><path d="m2 2 20 20"/></svg>
                    }
                 </ControlButton>
                 <ControlButton onClick={toggleScreen} active={localParticipant.isScreenShareEnabled} label={localParticipant.isScreenShareEnabled ? "Stop Presenting" : "Present Screen"}>

@@ -7,7 +7,7 @@ import {
 
 export default function Home() {
   return (
-    <div className="h-screen flex flex-col bg-white dark:bg-[#0a0a0a] text-slate-900 dark:text-white font-sans selection:bg-indigo-500/30 overflow-hidden">
+    <div className="h-screen flex flex-col bg-white dark:bg-black text-slate-900 dark:text-white font-sans selection:bg-indigo-500/30 overflow-hidden">
       
       {/* Background Contour Lines */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
